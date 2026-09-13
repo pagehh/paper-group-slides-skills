@@ -1,0 +1,28 @@
+---
+name: paper-group-slides
+description: Turn one AI or machine-learning paper PDF into a group-meeting report, with manual outline review or automatic generation and a continuous HTML document or restrained PPTX deck.
+---
+
+# Paper group slides
+
+Use this skill for a single AI/ML paper PDF when the user wants a 组会论文汇报. The source PDF is authoritative. Do not invent results, methods, baselines, or figure meanings. Distinguish paper claims from your analysis and questions for discussion.
+
+## Intake
+
+Collect the local PDF path and, when absent, use these defaults: Chinese, 20 minutes, standard technical depth, speaker notes enabled, critical analysis enabled. Also collect an optional application context when it affects the final takeaway (for example, 智能运维可视化). Ask only about choices that would materially change the report. Choose `manual` or `auto` from the user's request; if unspecified, default to `manual`. Choose `html`, `pptx`, or `both`; if unspecified, default to `html`. Save outputs in a user-chosen directory or a dedicated directory beside the PDF.
+
+## Workflow
+
+1. Read the PDF, identify the title, complete author list, author affiliations, research question, prior gap, method, evidence, limitations, and figure captions. Use page-aware extraction, e.g. `scripts/inspect_pdf.py PDF --out OUTDIR`. Inspect the actual first page for author/affiliation mapping and other pages for formulae, tables, and diagrams where extracted text is insufficient. Preserve all authors and affiliations that are legible in the PDF; do not abbreviate authors as “et al.” or infer a missing affiliation.
+2. Build a problem-driven report outline suited to the audience and time. Prefer background → gap → method intuition → necessary detail → decisive evidence → critique → discussion. Adapt to the paper; do not force a fixed page count or include empty sections. Keep experiments selective: use one "key evidence" section by default, with only the result, comparison, or ablation that most directly supports the paper's central claim. Mention other settings or secondary metrics in speaker notes only when needed for interpretation. When an application context is supplied, end with a clearly separated, evidence-aware reflection on how the paper's ideas could transfer to that context; distinguish this reflection from paper claims.
+3. Use original paper figures where they improve explanation. `inspect_pdf.py` extracts large embedded images and writes `figures/index.json`; match candidates to captions and verify each visually before use. If a figure is vector or split into pieces, render and crop its actual region from the PDF; do not substitute a generated result chart. The local `extract-paper-images` skill can help when arXiv source is available, but its OrbitOS output path is not required here.
+4. Write the structured report according to [references/report-format.md](references/report-format.md). Every paper-derived takeaway and point needs a page, figure, table, or section source. Label analysis and discussion prompts separately. Keep speaker notes oral and useful for the PPTX notes pane only; never put them in the audience-facing HTML.
+5. Draft a plain-language `speaker_script` according to [references/report-format.md](references/report-format.md). For a default 10-minute talk, explain the problem and technical architecture in everyday terms, rather than reading slide bullets or stacking unexplained abstractions. Include a short opening, one spoken passage for every content slide, and at least three likely audience questions with concise answers. `manual`: show this script plan alongside the outline before rendering. `auto`: continue through rendering without an approval pause.
+6. Render with `scripts/render_report.py REPORT.json --format html|pptx|both --out OUTDIR`. When PPTX is requested, also generate `speaker-script.md`. The title page/header must show the complete author list and, when supplied by the PDF, the author affiliations. HTML is one continuously scrollable document with all sections visible; never use slide navigation, a table-of-contents page, card-like page sections, or speaker notes. PPTX uses a restrained academic style and editable text, with speaker notes in its notes pane. Keep both audience-facing outputs clean: do not render source strings, section-type labels, page numbers, metadata footers, or duration text; retain source mapping in the JSON and speaker notes for verification. The same JSON drives both.
+7. Verify the source mapping, inspect figures, open the HTML and PPTX, read the Markdown script aloud enough to check that it is roughly 10 minutes, plain-language, and aligned slide by slide, then correct errors before delivery. State any figure or PDF parsing limitations clearly.
+
+## Format guidance
+
+The local `html-ppt` skill is a visual reference only: academic-paper/minimal-white palette, layout rhythm, and typography. Its slide runtime and keyboard navigation conflict with this skill's continuous HTML requirement, so do not include them. For PPTX, favor white or low-saturation backgrounds, one main idea per slide, moderate text density, and no decorative animation. Make it look like a concise human-prepared group-meeting deck, not a source-auditing or AI-generated template.
+
+Dependencies for the bundled scripts: Python 3, `pypdf`, `pdfplumber`, `Pillow`, and `python-pptx`. The PDF inspector can additionally use `pdf2image`/Poppler for page crops. If these are unavailable, use equivalent local PDF tools and preserve the same output contract. Do not fetch external sources unless the user has asked for them or they are necessary for a figure and access is permitted.

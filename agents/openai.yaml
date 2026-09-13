@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper Group Slides"
+  short_description: "Create AI/ML paper reports as HTML or PPTX"
+  default_prompt: "Use $paper-group-slides to turn this paper PDF into a group-meeting report."
